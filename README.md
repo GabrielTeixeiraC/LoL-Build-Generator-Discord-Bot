@@ -38,9 +38,11 @@ Before running the bot, make sure you have the following prerequisites:
 3. In your Discord server, you can use the following commands:
 
    - `!build` - Generates a random build and sends the details with images to the channel. The build includes a champion, spells, runes, and items.
+   
    ![Build](./images/build.png)
 
    - `!build mini` - Generates a random build and sends a simplified text-based version to the channel. The build includes a champion, spells, runes, and items.
+   
    ![Buildmini](./images/build-mini.png)
    - `!build help` - Displays the available commands and their descriptions.
 
