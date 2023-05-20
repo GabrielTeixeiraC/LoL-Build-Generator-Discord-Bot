@@ -50,8 +50,6 @@ async function getRandomSpellPriority() {
   return spellPriority;
 }
 
-
-
 async function getSpellImage(championData, spell) {
   const spellImage = baseImageUrl + 'spell/' + championData.spells[spell].image.full;
   return spellImage
@@ -156,16 +154,13 @@ async function removeAndReturnMythics(items) {
   return [items, mythicItems];
 }
 
-function filterItems(items) {
-  items = items.filter(item => item.inStore != false && !trickyItemsIDs.includes(item.id));
-  return items;
-}
-
 async function getRandomItems() {
   const { data } = await axios.get(baseUrl + 'item.json');
-  let itemsObject = Object.values(data.data);
-  itemsObject = filterItems(itemsObject);
-
+  let itemsObject = data.data;
+  
+  const filtered = Object.entries(itemsObject).filter(([id, value]) => !trickyItemsIDs.includes(id));
+  itemsObject = Object.fromEntries(filtered);
+  itemsObject = Object.values(itemsObject);
 
   itemsObject = itemsObject.filter(item => item.inStore != false);
 
