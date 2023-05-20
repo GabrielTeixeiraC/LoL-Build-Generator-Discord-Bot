@@ -26,32 +26,36 @@ export async function generateBuildMessage (msg, sendMessage) {
 
 async function createBuildDefault (sendMessage) {
   const build = (await getRandomBuild()).images;
-  sendMessage(build.championImage);
+  const messages = [];
+  messages.push(build.championImage);
 
   let spellsString = '**Habilidades:** ';
   for (let i = 0; i < 3; i++) {
     spellsString += build.spellsPriorityHotkeys[i] + ' ';
   }
 
-  sendMessage(spellsString);
+  messages.push(spellsString);
   for (let i = 0; i < 3; i++) {
-    sendMessage(build.spellImages[i]);
+    messages.push(build.spellImages[i]);
   }
 
-  sendMessage('**Runas primárias:** ');
+  messages.push('**Runas primárias:** ');
   for (let i = 0; i < 4; i++) {
-    sendMessage(build.runes[i]);
+    messages.push(build.runes[i]);
   }
 
-  sendMessage('**Runas Secundárias:** ');
+  messages.push('**Runas Secundárias:** ');
   for (let i = 4; i < 6; i++) {
-    sendMessage(build.runes[i]);
+    messages.push(build.runes[i]);
   }
 
-  sendMessage('**Itens:** ');
+  messages.push('**Itens:** ');
   for (let i = 0; i < 6; i++) {
-    sendMessage(build.items[i]);
+    messages.push(build.items[i]);
   }
+  messages.forEach((message) => {
+  sendMessage(message);
+  })
 }
 
 async function createBuildMini (sendMessage) {

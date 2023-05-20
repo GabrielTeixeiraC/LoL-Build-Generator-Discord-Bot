@@ -15,7 +15,8 @@ async function getBaseUrls() {
 
 async function getLatestVersion() {
   const { data } = await axios.get(`${apiUrl}/api/versions.json`);
-  return data;
+  if(data.length === 0) throw new Error('No versions found')
+  return data[0];
 }
 
 async function getChampion() {
