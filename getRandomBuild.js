@@ -1,4 +1,6 @@
-const axios = require('axios');
+import { get } from 'axios';
+
+const apiUrl = 'https://ddragon.leagueoflegends.com';
 
 let baseUrl = '';
 let baseImageUrl = '';
@@ -17,12 +19,12 @@ const trickyItemsIDs = [
 ];
 
 async function getLatestVersion() {
-  const { data } = await axios.get('https://ddragon.leagueoflegends.com/api/versions.json');
+  const { data } = await get(`${apiUrl}/api/versions.json`);
   return data[0];
 }
 
 async function getRandomChampion() {
-  const { data } = await axios.get(baseUrl + 'champion.json');
+  const { data } = await get(baseUrl + 'champion.json');
   const champions = Object.keys(data.data);
   const randomChampion = champions[Math.floor(Math.random() * champions.length)];
   return randomChampion;
@@ -58,7 +60,7 @@ async function getSpellImage(championData, spell) {
 
 async function getAllSpellsImagesAndPriority(champion) {
   const spellImages = [];
-  const { data } = await axios.get(baseUrl + 'champion/' + champion + '.json');
+  const { data } = await get(baseUrl + 'champion/' + champion + '.json');
   const championData = data.data[champion];
 
   const spellPriority = await getRandomSpellPriority();
@@ -76,7 +78,7 @@ async function getAllSpellsImagesAndPriority(champion) {
 }
 
 async function getRandomRuneTypes() {
-  const { data } = await axios.get(baseUrl + 'runesReforged.json');
+  const { data } = await get(baseUrl + 'runesReforged.json');
   const runes = data;
   const types = [];
 
@@ -157,7 +159,7 @@ async function removeAndReturnMythics(items) {
 }
 
 async function getRandomItems() {
-  const { data } = await axios.get(baseUrl + 'item.json');
+  const { data } = await get(baseUrl + 'item.json');
   let itemsObject = data.data;
   
   const filtered = Object.entries(itemsObject).filter(([id, value]) => !trickyItemsIDs.includes(id));
@@ -199,9 +201,9 @@ async function getRandomItems() {
 async function getRandomBuild() {
   const latestVersion = await getLatestVersion();
 
-  baseUrl = `https://ddragon.leagueoflegends.com/cdn/${latestVersion}/data/pt_BR/`;
-  baseImageUrl = `https://ddragon.leagueoflegends.com/cdn/${latestVersion}/img/`;
-  baseRuneImageUrl = 'https://ddragon.leagueoflegends.com/cdn/img/'
+  baseUrl = `${apiUrl}/cdn/${latestVersion}/data/pt_BR/`;
+  baseImageUrl = `${apiUrl}/cdn/${latestVersion}/img/`;
+  baseRuneImageUrl = `${apiUrl}/cdn/img/`
 
   const champion = await getRandomChampion();
   const championImage = await getChampionImage(champion);
@@ -231,6 +233,6 @@ async function getRandomBuild() {
   return build;
 }
 
-module.exports = {
+export {
   getRandomBuild
 }

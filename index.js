@@ -1,8 +1,8 @@
-const { Client, GatewayIntentBits, Events } = require('discord.js');
-const { getRandomBuild } = require('./getRandomBuild.js');
+import { Client, GatewayIntentBits, Events } from 'discord.js';
+import {getRandomBuild} from './getRandomBuild.js';
 
-const dotenv = require('dotenv');
-dotenv.config();
+import { config } from 'dotenv';
+config();
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
