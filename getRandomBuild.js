@@ -11,6 +11,7 @@ const spellsDictionary = {
 }
 
 const trickyItemsIDs = [
+  '1001', // Boots
   '3026', // Guardian Angel
   '4403', // The Golden Spatula
 ];
@@ -133,10 +134,11 @@ async function getBoots(items) {
   const boots = [];
 
   for (let i = 0; i < items.length; i++) {
-    if (items[i].tags.includes('Boots') && items[i].colloq != ';boot') {
+    if (items[i].tags.includes('Boots')) {
       boots.push(items[i]);
     }
   }
+
   return boots;
 }
 
