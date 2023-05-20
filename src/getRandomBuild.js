@@ -133,6 +133,8 @@ async function getRandomRunes() {
   const runesImages = [];
   const runeTypes = await getRandomRuneTypes();
 
+  // Randomly select 2 numbers from 1 to 3 to get 2 non-keystone rune slots from the second rune tree
+  // Example: [1, 2] means that the 2nd and 3rd slots from the second rune tree will be selected
   const randomSlots = [];
   while (randomSlots.length < 2) {
     const randomNumber = Math.floor(Math.random() * 3) + 1;
@@ -141,22 +143,13 @@ async function getRandomRunes() {
     }
   }
 
-  for (let i = 0; i < 4; i++) {
-    const runesObject = runeTypes[0].slots[i].runes;
-    const randomRune = runesObject[Math.floor(Math.random() * runesObject.length)];
-    runesNames.push(randomRune.name);
-    const runeImage = baseRuneImageUrl + randomRune.icon;
-    runesImages.push(runeImage);
+  for (let i = 0; i < 6; i++) {
+    const rune = runeTypes[i < 4 ? 0 : 1].slots[i < 4 ? i : randomSlots[i - 4]].runes[Math.floor(Math.random() * 4)];
+    runesNames.push(rune.name);
+    runesImages.push(baseRuneImageUrl + rune.icon);
   }
 
-  for (let i = 0; i < 2; i++) {
-    const runesObject = runeTypes[1].slots[randomSlots[i]].runes;
-    const randomRune = runesObject[Math.floor(Math.random() * runesObject.length)];
-    runesNames.push(randomRune.name);
-    const runeImage = baseRuneImageUrl + randomRune.icon;
-    runesImages.push(runeImage);
-  }
-
+  // Get only the names of the rune trees
   for (let i = 0; i < 2; i++) {
     runeTypes[i] = runeTypes[i].name;
   }
@@ -197,6 +190,8 @@ function removeAndReturnMythics(items) {
 async function getRandomItems() {
   const data = await getItems()
   let itemsObject = data.data;
+
+  const baseItemURL = baseImageUrl + 'item/';
   
   const filtered = Object.entries(itemsObject).filter(([id]) => !trickyItemsIDs.includes(id));
   itemsObject = Object.fromEntries(filtered);
@@ -208,29 +203,26 @@ async function getRandomItems() {
 
   const boots = getBoots(itemsObject);
   const randomBoot = boots[Math.floor(Math.random() * boots.length)];
-  const bootName = randomBoot.name;
-  const bootImage = baseImageUrl + 'item/' + randomBoot.image.full;
-  items.names.push(bootName);
-  items.images.push(bootImage);
+  items.names.push(randomBoot.name);
+  items.images.push(baseItemURL + randomBoot.image.full);
 
   const [itemsWithoutMythics, mythicItems] = removeAndReturnMythics(itemsObject);
   itemsObject = itemsWithoutMythics;
   const randomMythic = mythicItems[Math.floor(Math.random() * mythicItems.length)];
-  const mythicName = randomMythic.name;
-  const mythicImage = baseImageUrl + 'item/' + randomMythic.image.full;
-  items.names.push(mythicName);
-  items.images.push(mythicImage);
+  items.names.push(randomMythic.name);
+  items.images.push(baseItemURL + randomMythic.image.full);
 
+  // Get random legendary items
   while (items.names.length < 6) {
     const filteredItems = itemsObject.filter(item => item.depth > 2);
     const randomItem = filteredItems[Math.floor(Math.random() * filteredItems.length)];
-    const itemName = randomItem.name;
-    const itemImage = baseImageUrl + 'item/' + randomItem.image.full;
-    if (!items.names.includes(itemName)) {
-      items.names.push(itemName);
-      items.images.push(itemImage);
+
+    if (!items.names.includes(randomItem.name)) {
+      items.names.push(randomItem.name);
+      items.images.push(baseItemURL + randomItem.image.full);
     }
   }
+
   return items;
 }
 
