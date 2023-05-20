@@ -11,6 +11,11 @@ const spellsDictionary = {
     '2': 'E',
 }
 
+const trickyItemsIDs = [
+    '3026', // Guardian Angel
+    '4403', // The Golden Spatula
+];
+
 async function getLatestVersion() {
     const { data } = await axios.get('https://ddragon.leagueoflegends.com/api/versions.json');
     return data[0];
@@ -69,7 +74,7 @@ async function getAllSpellsImagesAndPriority(champion) {
     spellImages.push(await getSpellImage(championData, spellPriority[1]));
     spellImages.push(await getSpellImage(championData, spellPriority[2]));
 
-    return [spellsPriorityHotkeys, spellImages];
+    return { spellImages, spellsPriorityHotkeys };
 }
 
 async function getRandomRuneTypes() {
@@ -77,15 +82,18 @@ async function getRandomRuneTypes() {
     const runes = data;
     const types = [];
 
-    for (let i = 0; i < 2; i++) {
+    while (types.length < 2) {
         const randomType = runes[Math.floor(Math.random() * runes.length)];
-        types.push(randomType);
+        if (!types.includes(randomType)) {
+            types.push(randomType);
+        }
     }
 
     return types;
 }
 
-async function getRandomRunesImages() {
+async function getRandomRunes() {
+    const runesNames = [];
     const runesImages = [];
     const runeTypes = await getRandomRuneTypes();
 
@@ -98,40 +106,49 @@ async function getRandomRunesImages() {
     }
 
     for (let i = 0; i < 4; i++) {
-        const runes = runeTypes[0].slots[i].runes;
-        const randomRune = runes[Math.floor(Math.random() * runes.length)];
+        const runesObject = runeTypes[0].slots[i].runes;
+        const randomRune = runesObject[Math.floor(Math.random() * runesObject.length)];
+        runesNames.push(randomRune.name);
         const runeImage = baseRuneImageUrl + randomRune.icon;
         runesImages.push(runeImage);
     }
 
     for (let i = 0; i < 2; i++) {
-        const runes = runeTypes[1].slots[randomSlots[i]].runes;
-        const randomRune = runes[Math.floor(Math.random() * runes.length)];
+        const runesObject = runeTypes[1].slots[randomSlots[i]].runes;
+        const randomRune = runesObject[Math.floor(Math.random() * runesObject.length)];
+        runesNames.push(randomRune.name);
         const runeImage = baseRuneImageUrl + randomRune.icon;
         runesImages.push(runeImage);
     }
 
-    return runesImages;    
+    for (let i = 0; i < 2; i++) {
+        runeTypes[i] = runeTypes[i].name;
+    }
+
+    return {
+        runeTypes,
+        runesImages,
+        runesNames
+    };    
 }
 
-async function getBootsIDs(items) {
+async function getBoots(items) {
     const boots = [];
 
     for (let i = 0; i < items.length; i++) {
-        if (items[i].tags.includes('Boots') && items[i].name != 'Boots') {
-            boots.push(items[i].image.full);
+        if (items[i].tags.includes('Boots') && items[i].colloq != ';boot' ) {
+            boots.push(items[i]);
         }
     }
-
     return boots;
 }
 
-async function removeMythicsFromItemsAndReturnIDs(items) {
+async function removeAndReturnMythics(items) {
     const mythicItems = [];
 
     for (let i = 0; i < items.length; i++) {
         if (items[i].description.includes('Mythic')) {
-            mythicItems.push(items[i].image.full);
+            mythicItems.push(items[i]);
             items.splice(i, 1);
             i--;
         }
@@ -140,58 +157,79 @@ async function removeMythicsFromItemsAndReturnIDs(items) {
     return [items, mythicItems];
 }
 
-async function getRandomItemsImages() {
+function filterItems(items) {
+    items = items.filter(item => item.inStore != false && !trickyItemsIDs.includes(item.id));
+    return items; 
+}
+
+async function getRandomItems() {
     const { data } = await axios.get(baseUrl + 'item.json');
-    let items = Object.values(data.data);
-    items = items.filter(item => item.inStore != false);
+    let itemsObject = Object.values(data.data);
+    itemsObject = filterItems(itemsObject);
 
-    const itemsImages = [];
 
-    const boots = await getBootsIDs(items);
+    itemsObject = itemsObject.filter(item => item.inStore != false);
+
+    const items = {names: [], images: []};
+
+    const boots = await getBoots(itemsObject);
     const randomBoot = boots[Math.floor(Math.random() * boots.length)];
-    const bootImage = baseImageUrl + 'item/' + randomBoot;
-    itemsImages.push(bootImage);
+    const bootName = randomBoot.name;
+    const bootImage = baseImageUrl + 'item/' + randomBoot.image.full;
+    items.names.push(bootName);
+    items.images.push(bootImage);
 
-    const [itemsWithoutMythics, mythicItems] = await removeMythicsFromItemsAndReturnIDs(items);
-    items = itemsWithoutMythics;
+    const [itemsWithoutMythics, mythicItems] = await removeAndReturnMythics(itemsObject);
+    itemsObject = itemsWithoutMythics;
     const randomMythic = mythicItems[Math.floor(Math.random() * mythicItems.length)];
-    const mythicImage = baseImageUrl + 'item/' + randomMythic;
-    itemsImages.push(mythicImage);
+    const mythicName = randomMythic.name;
+    const mythicImage = baseImageUrl + 'item/' + randomMythic.image.full;
+    items.names.push(mythicName);
+    items.images.push(mythicImage);
 
-    while (itemsImages.length < 6) {
-        const filteredItems = items.filter(item => item.depth > 2);
+    while (items.names.length < 6) {
+        const filteredItems = itemsObject.filter(item => item.depth > 2);
         const randomItem = filteredItems[Math.floor(Math.random() * filteredItems.length)];
+        const itemName = randomItem.name;
         const itemImage = baseImageUrl + 'item/' + randomItem.image.full;
-        if (!itemsImages.includes(itemImage)) {
-            itemsImages.push(itemImage);
+        if (!items.names.includes(itemName)) {
+            items.names.push(itemName);
+            items.images.push(itemImage);
         }
     }
-
-    return itemsImages;
+    return items;
 }
 
 async function getRandomBuild() {
     const latestVersion = await getLatestVersion();
     
-    baseUrl = `https://ddragon.leagueoflegends.com/cdn/${latestVersion}/data/en_US/`;
+    baseUrl = `https://ddragon.leagueoflegends.com/cdn/${latestVersion}/data/pt_BR/`;
     baseImageUrl = `https://ddragon.leagueoflegends.com/cdn/${latestVersion}/img/`;
     baseRuneImageUrl = 'https://ddragon.leagueoflegends.com/cdn/img/'
 
     const champion = await getRandomChampion();
     const championImage = await getChampionImage(champion);
 
-    const [spellsPriorityHotkeys, spellImages] = await getAllSpellsImagesAndPriority(champion);
+    const { spellImages, spellsPriorityHotkeys } = await getAllSpellsImagesAndPriority(champion);
 
-    const runes = await getRandomRunesImages();
-
-    const items = await getRandomItemsImages();
+    const runes = await getRandomRunes();
+    const items = await getRandomItems();
 
     const build = {
-        championImage,
-        spellsPriorityHotkeys,
-        spellImages,
-        runes,
-        items
+        names: {
+            champion,
+            spellsPriorityHotkeys,
+            runesTypes: runes.runeTypes,
+            runes: runes.runesNames,
+            items: items.names
+        },
+        images: {
+            championImage,
+            spellsPriorityHotkeys,
+            spellImages,
+            runes: runes.runesImages,
+            items: items.images
+        }
     }
 
     return build;
