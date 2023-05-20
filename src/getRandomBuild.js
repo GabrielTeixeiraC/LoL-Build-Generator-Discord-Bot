@@ -1,9 +1,10 @@
-const axios = require('axios');
-
-let baseUrl = '';
-let baseImageUrl = '';
-const baseRuneImageUrl = 'https://ddragon.leagueoflegends.com/cdn/img/';
-const versionsUrl = 'https://ddragon.leagueoflegends.com/api/versions.json';
+import {
+  getChampion, 
+  getItems, 
+  getChampionDetails, 
+  getRunes, 
+  getBaseUrls
+  } from './services.js'
 
 const spellsDictionary = {
   '0': 'Q',
@@ -17,13 +18,46 @@ const trickyItemsIDs = [
   '4403', // The Golden Spatula
 ];
 
-async function getLatestVersion() {
-  const { data } = await axios.get(versionsUrl);
-  return data[0];
+let baseImageUrl = '';
+let baseRuneImageUrl = '';
+async function getRandomBuild() {
+  const {
+    baseImageUrl: serviceBaseImageUrl,
+    baseRuneImageUrl: serviceBaseRuneImageUrl,
+  } = await getBaseUrls(); 
+  baseImageUrl = serviceBaseImageUrl;
+  baseRuneImageUrl = serviceBaseRuneImageUrl;
+  const champion = await getRandomChampion();
+  const championImage = getChampionImage(champion);
+
+  const { spellImages, spellsPriorityHotkeys } = await getAllSpellsImagesAndPriority(champion);
+
+  const runes = await getRandomRunes();
+  const items = await getRandomItems();
+
+  const build = {
+    names: {
+      champion,
+      spellsPriorityHotkeys,
+      runesTypes: runes.runeTypes,
+      runes: runes.runesNames,
+      items: items.names
+    },
+    images: {
+      championImage,
+      spellsPriorityHotkeys,
+      spellImages,
+      runes: runes.runesImages,
+      items: items.images
+    }
+  }
+
+  return build;
 }
 
+
 async function getRandomChampion() {
-  const { data } = await axios.get(baseUrl + 'champion.json');
+  const data = await getChampion();
   const champions = Object.keys(data.data);
   const randomChampion = champions[Math.floor(Math.random() * champions.length)];
   return randomChampion;
@@ -31,11 +65,9 @@ async function getRandomChampion() {
 
 function getChampionImage(champion) {
   const championImage = baseImageUrl + 'champion/' + champion + '.png';
-
   return championImage;
 }
 
-// Returns a random permutation of the array [0, 1, 2]
 function getRandomSpellPriority() {
   let spellList = ['0', '1', '2'];
   const spellPriority = [];
@@ -59,7 +91,7 @@ function getSpellImage(championData, spell) {
 }
 
 async function getAllSpellsImagesAndPriority(champion) {
-  const { data } = await axios.get(baseUrl + 'champion/' + champion + '.json');
+  const { data } = await getChampionDetails(champion);
   const championData = data.data[champion];
   
   const spellPriority = getRandomSpellPriority();
@@ -75,8 +107,7 @@ async function getAllSpellsImagesAndPriority(champion) {
 }
 
 async function getRandomRuneTypes() {
-  const { data } = await axios.get(baseUrl + 'runesReforged.json');
-  const runes = data;
+  const runes = await getRunes()
   const types = [];
 
   while (types.length < 2) {
@@ -149,13 +180,12 @@ function getMythicsAndRemove(items) {
 }
 
 async function getRandomItems() {
-  const { data } = await axios.get(baseUrl + 'item.json');
+  const data = await getItems()
   let itemsObject = data.data;
 
   const baseItemURL = baseImageUrl + 'item/';
   
-  // Remove tricky items and items that are not in the store
-  const filtered = Object.entries(itemsObject).filter(([id, value]) => !trickyItemsIDs.includes(id));
+  const filtered = Object.entries(itemsObject).filter(([id]) => !trickyItemsIDs.includes(id));
   itemsObject = Object.fromEntries(filtered);
   itemsObject = Object.values(itemsObject);
 
@@ -163,20 +193,17 @@ async function getRandomItems() {
 
   const items = { names: [], images: [] };
 
-  // Get random boots
   const boots = getBoots(itemsObject);
   const randomBoot = boots[Math.floor(Math.random() * boots.length)];
   items.names.push(randomBoot.name);
   items.images.push(baseItemURL + randomBoot.image.full);
 
-  // Get random mythic item
   const [itemsWithoutMythics, mythicItems] = getMythicsAndRemove(itemsObject);
   itemsObject = itemsWithoutMythics;
   const randomMythic = mythicItems[Math.floor(Math.random() * mythicItems.length)];
   items.names.push(randomMythic.name);
   items.images.push(baseItemURL + randomMythic.image.full);
 
-  // Get random legendary items
   while (items.names.length < 6) {
     const filteredItems = itemsObject.filter(item => item.depth > 2);
     const randomItem = filteredItems[Math.floor(Math.random() * filteredItems.length)];
@@ -190,40 +217,6 @@ async function getRandomItems() {
   return items;
 }
 
-async function getRandomBuild() {
-  const latestVersion = await getLatestVersion();
-
-  baseUrl = `https://ddragon.leagueoflegends.com/cdn/${latestVersion}/data/pt_BR/`;
-  baseImageUrl = `https://ddragon.leagueoflegends.com/cdn/${latestVersion}/img/`;
-
-  const champion = await getRandomChampion();
-  const championImage = getChampionImage(champion);
-
-  const { spellImages, spellsPriorityHotkeys } = await getAllSpellsImagesAndPriority(champion);
-
-  const runes = await getRandomRunes();
-  const items = await getRandomItems();
-
-  const build = {
-    names: {
-      champion,
-      spellsPriorityHotkeys,
-      runesTypes: runes.runeTypes,
-      runes: runes.runesNames,
-      items: items.names
-    },
-    images: {
-      championImage,
-      spellsPriorityHotkeys,
-      spellImages,
-      runes: runes.runesImages,
-      items: items.images
-    }
-  }
-
-  return build;
-}
-
-module.exports = {
+export {
   getRandomBuild
 }
