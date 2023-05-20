@@ -2,7 +2,7 @@
 
 This is a Discord bot that generates a random League of Legends build, including a champion, spells, runes, and items. The bot uses the Discord.js library and interacts with the Riot Games API to retrieve game data.
 
-*Please note that this is just a side project I've created to play with my friends. It doesn't cover all the many edge cases in League of Legends and can be improved in various ways. Feel free to fork and submit a PR if you want to contribute. I appreciate any suggestions, feedback, and contributions.*
+*Please note that this is just a side project I've created to play with my friends. It doesn't cover all of the many edge cases in League of Legends and can be improved in various ways. Feel free to fork and submit a PR if you want to contribute. I appreciate any suggestions, feedback, and contributions.*
 
 ## Prerequisites
 
