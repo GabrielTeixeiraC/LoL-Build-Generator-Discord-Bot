@@ -1,4 +1,4 @@
-import { get } from 'axios';
+import axios from "axios";
 const apiUrl = 'https://ddragon.leagueoflegends.com';
 
 async function getBaseUrls() {
@@ -14,30 +14,30 @@ async function getBaseUrls() {
 }
 
 async function getLatestVersion() {
-  const { data } = await get(`${apiUrl}/api/versions.json`);
+  const { data } = await axios.get(`${apiUrl}/api/versions.json`);
   return data;
 }
 
 async function getChampion() {
-  const { data } = await get(`${apiUrl}/cdn/${await getLatestVersion()}/data/en_US/champion.json`);
+  const { data } = await axios.get(`${apiUrl}/cdn/${await getLatestVersion()}/data/en_US/champion.json`);
   return data;
 }
 
 async function getChampionDetails(champion) {
   const { baseUrl } = await getBaseUrls();
-  const { data } = await get(baseUrl + 'champion/' + champion + '.json');
+  const { data } = await axios.get(baseUrl + 'champion/' + champion + '.json');
   return data;
 }
 
 async function getItems() {
   const { baseUrl } = await getBaseUrls();
-  const { data } = await get(baseUrl + 'item.json');
+  const { data } = await axios.get(baseUrl + 'item.json');
   return data;
 }
 
 async function getRunes() {
   const { baseUrl } = await getBaseUrls();
-  const { data } = await get(baseUrl + 'runesReforged.json');
+  const { data } = await axios.get(baseUrl + 'runesReforged.json');
   return data;
 }
 
