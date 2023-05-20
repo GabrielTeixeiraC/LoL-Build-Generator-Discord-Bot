@@ -1,10 +1,10 @@
-import { get } from 'axios';
-
-const apiUrl = 'https://ddragon.leagueoflegends.com';
-
-let baseUrl = '';
-let baseImageUrl = '';
-let baseRuneImageUrl = '';
+import {
+  getChampion, 
+  getItems, 
+  getChampionDetails, 
+  getRunes, 
+  getBaseUrls
+  } from './services.js'
 
 const spellsDictionary = {
   '0': 'Q',
@@ -18,25 +18,57 @@ const trickyItemsIDs = [
   '4403', // The Golden Spatula
 ];
 
-async function getLatestVersion() {
-  const { data } = await get(`${apiUrl}/api/versions.json`);
-  return data[0];
+let baseImageUrl = '';
+let baseRuneImageUrl = '';
+async function getRandomBuild() {
+  const {
+    baseImageUrl: serviceBaseImageUrl,
+    baseRuneImageUrl: serviceBaseRuneImageUrl,
+  } = await getBaseUrls(); 
+  baseImageUrl = serviceBaseImageUrl;
+  baseRuneImageUrl = serviceBaseRuneImageUrl;
+  const champion = await getRandomChampion();
+  const championImage = getChampionImage(champion);
+
+  const { spellImages, spellsPriorityHotkeys } = await getAllSpellsImagesAndPriority(champion);
+
+  const runes = await getRandomRunes();
+  const items = await getRandomItems();
+
+  const build = {
+    names: {
+      champion,
+      spellsPriorityHotkeys,
+      runesTypes: runes.runeTypes,
+      runes: runes.runesNames,
+      items: items.names
+    },
+    images: {
+      championImage,
+      spellsPriorityHotkeys,
+      spellImages,
+      runes: runes.runesImages,
+      items: items.images
+    }
+  }
+
+  return build;
 }
 
+
 async function getRandomChampion() {
-  const { data } = await get(baseUrl + 'champion.json');
+  const data = await getChampion();
   const champions = Object.keys(data.data);
   const randomChampion = champions[Math.floor(Math.random() * champions.length)];
   return randomChampion;
 }
 
-async function getChampionImage(champion) {
+function getChampionImage(champion) {
   const championImage = baseImageUrl + 'champion/' + champion + '.png';
-
   return championImage;
 }
 
-async function getRandomSpellPriority() {
+function getRandomSpellPriority() {
   let spellList = ['0', '1', '2'];
   const spellPriority = [];
 
@@ -53,33 +85,37 @@ async function getRandomSpellPriority() {
   return spellPriority;
 }
 
-async function getSpellImage(championData, spell) {
+function getSpellImage(championData, spell) {
   const spellImage = baseImageUrl + 'spell/' + championData.spells[spell].image.full;
   return spellImage
 }
 
 async function getAllSpellsImagesAndPriority(champion) {
-  const spellImages = [];
-  const { data } = await get(baseUrl + 'champion/' + champion + '.json');
+  const data = await getChampionDetails(champion);
   const championData = data.data[champion];
 
-  const spellPriority = await getRandomSpellPriority();
+  const spellPriority = getRandomSpellPriority();
 
-  const spellsPriorityHotkeys = [];
-  spellsPriorityHotkeys.push(spellsDictionary[spellPriority[0]]);
-  spellsPriorityHotkeys.push(spellsDictionary[spellPriority[1]]);
-  spellsPriorityHotkeys.push(spellsDictionary[spellPriority[2]]);
+  const promises = [
+    getSpellImage(championData, spellPriority[0]),
+    getSpellImage(championData, spellPriority[1]),
+    getSpellImage(championData, spellPriority[2]),
+  ]
 
-  spellImages.push(await getSpellImage(championData, spellPriority[0]));
-  spellImages.push(await getSpellImage(championData, spellPriority[1]));
-  spellImages.push(await getSpellImage(championData, spellPriority[2]));
+  const spellsPriorityHotkeys = [
+    spellsDictionary[spellPriority[0]],
+    spellsDictionary[spellPriority[1]],
+    spellsDictionary[spellPriority[2]],
+  ]
+
+  
+  const spellImages = await Promise.all(promises);
 
   return { spellImages, spellsPriorityHotkeys };
 }
 
 async function getRandomRuneTypes() {
-  const { data } = await get(baseUrl + 'runesReforged.json');
-  const runes = data;
+  const runes = await getRunes()
   const types = [];
 
   while (types.length < 2) {
@@ -132,7 +168,7 @@ async function getRandomRunes() {
   };
 }
 
-async function getBoots(items) {
+function getBoots(items) {
   const boots = [];
 
   for (let i = 0; i < items.length; i++) {
@@ -144,7 +180,7 @@ async function getBoots(items) {
   return boots;
 }
 
-async function removeAndReturnMythics(items) {
+function removeAndReturnMythics(items) {
   const mythicItems = [];
 
   for (let i = 0; i < items.length; i++) {
@@ -159,10 +195,10 @@ async function removeAndReturnMythics(items) {
 }
 
 async function getRandomItems() {
-  const { data } = await get(baseUrl + 'item.json');
+  const data = await getItems()
   let itemsObject = data.data;
   
-  const filtered = Object.entries(itemsObject).filter(([id, value]) => !trickyItemsIDs.includes(id));
+  const filtered = Object.entries(itemsObject).filter(([id]) => !trickyItemsIDs.includes(id));
   itemsObject = Object.fromEntries(filtered);
   itemsObject = Object.values(itemsObject);
 
@@ -170,14 +206,14 @@ async function getRandomItems() {
 
   const items = { names: [], images: [] };
 
-  const boots = await getBoots(itemsObject);
+  const boots = getBoots(itemsObject);
   const randomBoot = boots[Math.floor(Math.random() * boots.length)];
   const bootName = randomBoot.name;
   const bootImage = baseImageUrl + 'item/' + randomBoot.image.full;
   items.names.push(bootName);
   items.images.push(bootImage);
 
-  const [itemsWithoutMythics, mythicItems] = await removeAndReturnMythics(itemsObject);
+  const [itemsWithoutMythics, mythicItems] = removeAndReturnMythics(itemsObject);
   itemsObject = itemsWithoutMythics;
   const randomMythic = mythicItems[Math.floor(Math.random() * mythicItems.length)];
   const mythicName = randomMythic.name;
@@ -196,41 +232,6 @@ async function getRandomItems() {
     }
   }
   return items;
-}
-
-async function getRandomBuild() {
-  const latestVersion = await getLatestVersion();
-
-  baseUrl = `${apiUrl}/cdn/${latestVersion}/data/pt_BR/`;
-  baseImageUrl = `${apiUrl}/cdn/${latestVersion}/img/`;
-  baseRuneImageUrl = `${apiUrl}/cdn/img/`
-
-  const champion = await getRandomChampion();
-  const championImage = await getChampionImage(champion);
-
-  const { spellImages, spellsPriorityHotkeys } = await getAllSpellsImagesAndPriority(champion);
-
-  const runes = await getRandomRunes();
-  const items = await getRandomItems();
-
-  const build = {
-    names: {
-      champion,
-      spellsPriorityHotkeys,
-      runesTypes: runes.runeTypes,
-      runes: runes.runesNames,
-      items: items.names
-    },
-    images: {
-      championImage,
-      spellsPriorityHotkeys,
-      spellImages,
-      runes: runes.runesImages,
-      items: items.images
-    }
-  }
-
-  return build;
 }
 
 export {
