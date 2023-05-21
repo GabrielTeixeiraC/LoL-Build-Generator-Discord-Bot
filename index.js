@@ -1,5 +1,5 @@
 import { Client, GatewayIntentBits, Events } from 'discord.js';
-import {generateBuildMessage} from './src/generateBuildMessage.js'
+import { generateBuildMessage } from './src/generateBuildMessage.js'
 import { config } from 'dotenv';
 
 config();
@@ -7,8 +7,6 @@ config();
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
 });
-
-
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
