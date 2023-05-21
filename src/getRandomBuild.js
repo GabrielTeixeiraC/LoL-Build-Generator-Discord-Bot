@@ -92,7 +92,7 @@ function getSpellImage(championData, spell) {
 
 async function getAllSpellsImagesAndPriority(champion) {
   const { data } = await getChampionDetails(champion);
-  const championData = data.data[champion];
+  const championData = data[champion];
   
   const spellPriority = getRandomSpellPriority();
   
@@ -108,25 +108,24 @@ async function getAllSpellsImagesAndPriority(champion) {
 
 async function getRandomRuneTypes() {
   const runes = await getRunes()
-  const types = [];
-
-  while (types.length < 2) {
+  const runeTypes = [];
+  
+  while (runeTypes.length < 2) {
     const randomType = runes[Math.floor(Math.random() * runes.length)];
-    if (!types.includes(randomType)) {
-      types.push(randomType);
+    if (!runeTypes.includes(randomType)) {
+      runeTypes.push(randomType);
     }
   }
-
-  return types;
+  
+  const numberOfKeystones = runeTypes[0].slots[0].runes.length;
+  return {runeTypes, numberOfKeystones};
 }
 
 async function getRandomRunes() {
   const runesNames = [];
   const runesImages = [];
-  const runeTypes = await getRandomRuneTypes();
+  const { runeTypes, numberOfKeystones } = await getRandomRuneTypes();
 
-  // Randomly select 2 numbers from 1 to 3 to get 2 non-keystone rune slots from the second rune tree
-  // Example: [1, 2] means that the 2nd and 3rd slots from the second rune tree will be selected
   const randomSlots = [];
   while (randomSlots.length < 2) {
     const randomNumber = Math.floor(Math.random() * 3) + 1;
@@ -136,12 +135,17 @@ async function getRandomRunes() {
   }
 
   for (let i = 0; i < 6; i++) {
-    const rune = runeTypes[i < 4 ? 0 : 1].slots[i < 4 ? i : randomSlots[i - 4]].runes[Math.floor(Math.random() * 4)];
+    let rune;
+    if (i === 0) {
+      rune = runeTypes[0].slots[0].runes[Math.floor(Math.random() * numberOfKeystones)];
+    } else {
+      rune = runeTypes[i < 4 ? 0 : 1].slots[i < 4 ? i : randomSlots[i - 4]].runes[Math.floor(Math.random() * 3)];
+    }
+      
     runesNames.push(rune.name);
     runesImages.push(baseRuneImageUrl + rune.icon);
   }
 
-  // Get only the names of the rune trees
   for (let i = 0; i < 2; i++) {
     runeTypes[i] = runeTypes[i].name;
   }
@@ -180,8 +184,8 @@ function getMythicsAndRemove(items) {
 }
 
 async function getRandomItems() {
-  const data = await getItems()
-  let itemsObject = data.data;
+  const { data } = await getItems()
+  let itemsObject = data;
 
   const baseItemURL = baseImageUrl + 'item/';
   
@@ -208,7 +212,7 @@ async function getRandomItems() {
     const filteredItems = itemsObject.filter(item => item.depth > 2);
     const randomItem = filteredItems[Math.floor(Math.random() * filteredItems.length)];
 
-    if (!items.names.includes(itemName)) {
+    if (!items.names.includes(randomItem.name)) {
       items.names.push(randomItem.name);
       items.images.push(baseItemURL + randomItem.image.full);
     }
