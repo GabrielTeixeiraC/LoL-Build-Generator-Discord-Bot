@@ -14,7 +14,7 @@ export async function generateBuildMessage (msg, sendMessage) {
       await createBuildMini(sendMessage);
       return;
     }
-    if (message.match('^\s*!build\s*')) {
+    if (message === '!build help') {
       returnHelpMessage(sendMessage);
       return;
     }
