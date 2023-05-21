@@ -14,7 +14,7 @@ export async function generateBuildMessage (msg, sendMessage) {
       await createBuildMini(sendMessage);
       return;
     }
-    if (message.match('!build')) {
+    if (message.match('^\s*!build\s*')) {
       returnHelpMessage(sendMessage);
       return;
     }
@@ -91,8 +91,8 @@ async function createBuildMini (sendMessage) {
 
 function returnHelpMessage (sendMessage) {
   let helpMessage = '**COMANDOS:** \n';
-  helpMessage += '!build - Gera build aleatória com imagens \n';
-  helpMessage += '!build mini - Gera build aleatória em texto apenas (mais rápido) \n';
+  helpMessage += '- **!build**: Gera build aleatória com imagens \n';
+  helpMessage += '- **!build mini**: Gera build aleatória em texto apenas (mais rápido) \n';
 
   sendMessage(helpMessage);
 }
